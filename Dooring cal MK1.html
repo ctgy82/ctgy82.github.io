@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제품 옵션 선택</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .step {
+            display: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .selected {
+            background-color: #28a745;
+        }
+        #completeButton {
+            background-color: #dc3545;
+            color: white;
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            display: none;
+        }
+        #backButton {
+            background-color: #ffc107;
+            color: white;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+        }
+        .prevButton {
+            background-color: #6c757d;
+            color: white;
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            display: none;
+        }
+        #statusBarContainer {
+            width: 100%;
+            background-color: #e0e0e0;
+            height: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        #statusBar {
+            height: 100%;
+            background-color: #4caf50;
+            width: 0%;
+            border-radius: 10px;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        #statusText {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="statusBarContainer">
+        <div id="statusBar"></div>
+        <div id="statusText">Step 1 of 4</div>
+    </div>
+    <div id="colorStep" class="step">
+        <h2>색상을 선택하세요.</h2>
+        <button onclick="saveChoice('color', '빨강')">빨강</button>
+        <button onclick="saveChoice('color', '파랑')">파랑</button>
+        <button onclick="saveChoice('color', '녹색')">녹색</button>
+    </div>
+    <div id="sizeStep" class="step">
+        <h2>사이즈를 선택하세요.</h2>
+        <button onclick="saveChoice('size', '소')">소</button>
+        <button onclick="saveChoice('size', '중')">중</button>
+        <button onclick="saveChoice('size', '대')">대</button>
+        <button class="prevButton" onclick="goBackFromSize()">이전 단계</button>
+    </div>
+    <div id="featuresStep" class="step">
+        <h2>추가 기능을 선택하세요. (여러 개 선택 가능)</h2>
+        <button id="featureWaterproof" onclick="toggleFeature('방수', this)">방수</button>
+        <button id="featureShockproof" onclick="toggleFeature('충격 방지', this)">충격 방지</button>
+        <button id="featureWirelessCharging" onclick="toggleFeature('무선 충전', this)">무선 충전</button>
+        <button class="prevButton" onclick="goBackFromFeatures()">이전 단계</button>
+    </div>
+    <button id="completeButton" onclick="showFinalPrice()">완료</button>
+    <div id="finalPriceStep" class="step">
+        <h2>선택한 옵션에 따른 최종 가격:</h2>
+        <div id="finalPrice"></div>
+    </div>
+    <button id="backButton" onclick="resetAndStartOver()">돌아가기</button>
+
+    <script>
+        const selections = {
+            color: null,
+            size: null,
+            features: []
+        };
+        const optionPrices = {
+            color: {"빨강": 500, "파랑": 500, "녹색": 500},
+            size: {"소": 0, "중": 1000, "대": 2000},
+            features: {"방수": 3000, "충격 방지": 4000, "무선 충전": 5000}
+        };
+        const steps = ['color', 'size', 'features', 'finalPrice'];
+        document.getElementById('colorStep').style.display = 'block';
+
+        function saveChoice(step, choice) {
+            selections[step] = choice;
+            const nextStepIndex = steps.indexOf(step) + 1;
+            updateStep(nextStepIndex);
+        }
+
+        function toggleFeature(feature, element) {
+            const featureIndex = selections.features.indexOf(feature);
+            if (featureIndex > -1) {
+                selections.features.splice(featureIndex, 1);
+                element.classList.remove('selected');
+            } else {
+                selections.features.push(feature);
+                element.classList.add('selected');
+            }
+        }
+
+        function goBackFromSize() {
+            updateStep(0); // Go back to color selection
+        }
+
+        function goBackFromFeatures() {
+            updateStep(1); // Go back to size selection
+        }
+
+        function showFinalPrice() {
+            const finalPrice = calculateFinalPrice();
+            document.getElementById('finalPrice').innerText = `최종 가격: ${finalPrice}원`;
+            updateStep(3); // Move to final price step
+        }
+
+        function resetAndStartOver() {
+            selections.color = null;
+            selections.size = null;
+            selections.features = [];
+            updateStep(0); // Reset to first step
+        }
+
+        function calculateFinalPrice() {
+            let finalPrice = 10000;
+            finalPrice += optionPrices.color[selections.color];
+            finalPrice += optionPrices.size[selections.size];
+            selections.features.forEach(feature => {
+                finalPrice += optionPrices.features[feature];
+            });
+            return finalPrice;
+        }
+
+        function updateStep(stepIndex) {
+            document.querySelectorAll('.step').forEach((el, index) => {
+                el.style.display = index === stepIndex ? 'block' : 'none';
+            });
+            document.getElementById('completeButton').style.display = stepIndex === 2 ? 'block' : 'none';
+            document.getElementById('backButton').style.display = stepIndex === 3 ? 'block' : 'none';
+            document.querySelectorAll('.prevButton').forEach((btn, index) => {
+                btn.style.display = index === stepIndex - 1 ? 'block' : 'none';
+            });
+            updateStatusBar(stepIndex);
+        }
+
+        function updateStatusBar(stepIndex) {
+            const percentage = ((stepIndex + 1) / steps.length) * 100;
+            document.getElementById('statusBar').style.width = `${percentage}%`;
+            document.getElementById('statusText').innerText = `Step ${stepIndex + 1} of ${steps.length}`;
+        }
+    </script>
+</body>
+</html>
